@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>標案雷達</title>
+<meta name="description" content="用關鍵字追蹤台灣政府電子採購網最近的招標與決標公告，研究用途。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1d4e6b">
+<style>
+:root{
+  --bg:#f2f4f5; --card:#fff; --ink:#18252c; --muted:#5d6a71; --line:#d7dde0;
+  --main:#1d4e6b; --main-soft:#e1ecf2; --a:#1f6f68; --a-soft:#dff0ec; --b:#8a5a1a; --b-soft:#f6ead6; --warn:#a33a35;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#11181c; --card:#1a2328; --ink:#e6edf0; --muted:#97a6ad; --line:#2c383e;
+    --main:#7fb6d6; --main-soft:#1d3240; --a:#6cc2b4; --a-soft:#1b3531; --b:#e0aa62; --b-soft:#3a2c1a; --warn:#e2827c; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:16px 16px 60px}
+header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:22px;margin:0;flex:1}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 12px;font-size:14px;cursor:pointer}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
+.bar select,.bar input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.bar input{flex:1;min-width:140px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 14px;cursor:pointer;background:var(--main);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{font-size:13px;border-radius:999px;padding:4px 10px;border:1px solid var(--line);background:var(--card);cursor:pointer;color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.status{font-size:14px;color:var(--muted);margin:8px 0}
+.status.err{color:var(--warn)}
+.list{list-style:none;margin:0;padding:0}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.item h3{font-size:16px;margin:4px 0 6px;line-height:1.4}
+.meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px}
+.tag.a{background:var(--a-soft);color:var(--a)}
+.tag.b{background:var(--b-soft);color:var(--b)}
+.tag.t{background:var(--main-soft);color:var(--main)}
+.tag.x{background:var(--line);color:var(--muted)}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.acts a,.acts button{font-size:13px;color:var(--main);background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;text-decoration:none;cursor:pointer;font-family:inherit}
+.detail{margin-top:8px;font-size:14px;border-top:1px dashed var(--line);padding-top:8px}
+.detail table{border-collapse:collapse;width:100%}
+.detail td{padding:3px 0;vertical-align:top;border-bottom:1px solid var(--line)}
+.detail td:first-child{color:var(--muted);width:40%;padding-right:8px}
+details.set{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:12px 0}
+details.set summary{cursor:pointer;font-weight:700}
+details.set textarea{width:100%;min-height:60px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:4px}
+details.set label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+.foot{font-size:12px;color:var(--muted);margin-top:24px;line-height:1.6}
+.foot a{color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>標案雷達</h1>
+    <button class="ghost" id="install">加到手機桌面</button>
+  </header>
+  <p class="hint" id="install-hint" hidden></p>
+  <p class="hint">用關鍵字追蹤政府電子採購網最近的招標與決標公告。研究用途。</p>
+
+  <div class="bar">
+    <select id="days" aria-label="期間">
+      <option value="3">最近 3 天</option>
+      <option value="7" selected>最近 7 天</option>
+      <option value="14">最近 14 天</option>
+    </select>
+    <input id="filter" placeholder="在結果中篩選，例如：高雄、環保局" aria-label="篩選">
+    <button class="btn" id="go">更新</button>
+  </div>
+
+  <div class="chips" id="groups"></div>
+  <div class="chips" id="types"></div>
+
+  <div class="status" id="status">按「更新」開始搜尋。</div>
+  <ul class="list" id="list"></ul>
+
+  <details class="set">
+    <summary>關鍵字設定</summary>
+    <label for="kw-a">A 組（預設：PHAGE）</label>
+    <input id="name-a" class="ghost" style="width:100%;margin-top:4px" aria-label="A 組名稱">
+    <textarea id="kw-a" placeholder="一行一個關鍵字"></textarea>
+    <label for="kw-b">B 組（預設：waste-check）</label>
+    <input id="name-b" class="ghost" style="width:100%;margin-top:4px" aria-label="B 組名稱">
+    <textarea id="kw-b" placeholder="一行一個關鍵字"></textarea>
+    <div class="acts"><button id="save">儲存</button><button id="reset">恢復預設</button></div>
+    <p class="hint">關鍵字比對的是標案名稱。設定只存在這台裝置的瀏覽器裡。</p>
+  </details>
+
+  <p class="foot">
+    資料來源：<a href="https://pcc-api.openfun.app/" target="_blank" rel="noopener">pcc-api.openfun.app</a>（g0v 社群，資料收集自<a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener">政府電子採購網</a>）。本工具僅供研究使用，引用時請註明出處；商業用途請改用政府採購網的開放資料集。資料可能有延遲或缺漏，投標前請以採購網公告為準。
+  </p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const API = "https://pcc-api.openfun.app";
+const KEY = "tender-radar:v1";
+const DEF = {
+  nameA: "PHAGE",
+  kwA: ["人工智慧","生成式","AI","資安","稽核","日誌","存證"],
+  nameB: "waste-check",
+  kwB: ["廢棄物","聯單","清除處理","稽查管制"]
+};
+const MAX_PAGES = 3;               // 每個關鍵字最多翻幾頁
+const $ = id => document.getElementById(id);
+let cfg, results = [], groupOn = {A:true,B:true}, typeOn = {};
+
+function load(){
+  try{ cfg = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY)) || {}); }catch(e){ cfg = Object.assign({}, DEF); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function https(u){ return String(u||"").replace(/^http:\/\//,"https://"); }
+function ymd(d){ return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+function fmtDate(n){ n=String(n); return n.slice(0,4)+"-"+n.slice(4,6)+"-"+n.slice(6,8); }
+
+/* 公告類型分類 */
+function kind(type){
+  type = type || "";
+  if (/變賣|拍賣|出租|標售/.test(type)) return "exclude";
+  if (/無法決標/.test(type)) return "無法決標";
+  if (/決標/.test(type)) return "決標";
+  if (/更正/.test(type)) return "更正";
+  if (/招標|報價單|企劃書|公開閱覽|徵求/.test(type)) return "招標";
+  return "其他";
+}
+
+async function getJSON(url){
+  const r = await fetch(url, {cache:"no-store"});
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+
+async function search(){
+  const days = +$("days").value;
+  const cut = new Date(); cut.setDate(cut.getDate() - days + 1);
+  const cutoff = ymd(cut);
+  const jobs = [];
+  cfg.kwA.forEach(k => jobs.push(["A",k]));
+  cfg.kwB.forEach(k => jobs.push(["B",k]));
+  const seen = new Map(); let done = 0, failed = [];
+  $("go").disabled = true;
+  setStatus("搜尋中…");
+  for (const [g,k] of jobs){
+    try{
+      for (let p=1; p<=MAX_PAGES; p++){
+        const data = await getJSON(API + "/api/searchbytitle?query=" + encodeURIComponent(k) + "&page=" + p);
+        const recs = data.records || [];
+        let older = false;
+        for (const r of recs){
+          if (+r.date < cutoff){ older = true; continue; }
+          const b = r.brief || {};
+          const kd = kind(b.type);
+          if (kd === "exclude") continue;
+          const id = [r.unit_id, r.job_number, r.date, r.filename].join("|");
+          if (seen.has(id)){ const x = seen.get(id); x.groups.add(g); x.kws.add(k); continue; }
+          seen.set(id, { id, date:r.date, title:b.title||"(無標題)", type:b.type||"", kind:kd, unit:r.unit_name||"",
+            job:r.job_number||"", detail:https(r.tender_api_url), unitApi:https(r.unit_api_url),
+            groups:new Set([g]), kws:new Set([k]) });
+        }
+        if (older || recs.length === 0 || p >= (data.total_pages||1)) break;
+      }
+    }catch(e){ failed.push(k); }
+    done++;
+    setStatus("搜尋中… " + done + " / " + jobs.length + " 個關鍵字");
+  }
+  results = [...seen.values()].sort((a,b) => b.date - a.date || a.unit.localeCompare(b.unit));
+  $("go").disabled = false;
+  buildTypeChips();
+  render();
+  const msg = results.length + " 筆（最近 " + days + " 天，已排除財物變賣等）";
+  setStatus(failed.length ? msg + "。無法取得：" + failed.join("、") : msg, failed.length === jobs.length);
+}
+
+function setStatus(t, err){ const s=$("status"); s.textContent=t; s.className = "status" + (err?" err":""); }
+
+function buildTypeChips(){
+  const kinds = [...new Set(results.map(r=>r.kind))];
+  kinds.forEach(k => { if (!(k in typeOn)) typeOn[k] = true; });
+  $("types").innerHTML = kinds.map(k => {
+    const n = results.filter(r=>r.kind===k).length;
+    return '<button class="chip" data-t="'+esc(k)+'" aria-pressed="'+typeOn[k]+'">'+esc(k)+' '+n+'</button>';
+  }).join("");
+}
+function buildGroupChips(){
+  $("groups").innerHTML =
+    '<button class="chip" data-g="A" aria-pressed="'+groupOn.A+'">'+esc(cfg.nameA)+'</button>'+
+    '<button class="chip" data-g="B" aria-pressed="'+groupOn.B+'">'+esc(cfg.nameB)+'</button>';
+}
+
+function render(){
+  const f = $("filter").value.trim();
+  const shown = results.filter(r =>
+    [...r.groups].some(g => groupOn[g]) && typeOn[r.kind] !== false &&
+    (!f || (r.title + r.unit + r.type).includes(f)));
+  $("list").innerHTML = shown.length ? shown.map(r => {
+    const gt = [...r.groups].map(g => '<span class="tag '+(g==="A"?"a":"b")+'">'+esc(g==="A"?cfg.nameA:cfg.nameB)+'</span>').join("");
+    const kt = '<span class="tag '+(r.kind==="決標"?"t":r.kind==="招標"?"t":"x")+'">'+esc(r.kind)+'</span>';
+    return '<li class="item" data-id="'+esc(r.id)+'">'+
+      '<div class="row">'+gt+kt+'</div>'+
+      '<h3>'+esc(r.title)+'</h3>'+
+      '<div class="meta"><span>'+fmtDate(r.date)+'</span><span>'+esc(r.unit)+'</span><span>'+esc(r.type)+'</span></div>'+
+      '<div class="meta"><span>案號 '+esc(r.job)+'</span><span>符合：'+esc([...r.kws].join("、"))+'</span></div>'+
+      '<div class="acts"><button data-d="1">看預算與決標</button>'+
+      '<a href="https://web.pcc.gov.tw/prkms/tender/common/basic/readTenderBasic" target="_blank" rel="noopener">到採購網查詢</a></div>'+
+      '<div class="detail" hidden></div></li>';
+  }).join("") : (results.length ? '<li class="status">沒有符合篩選的結果。</li>' : "");
+}
+
+/* 詳細資料：從單一標案 API 找出關鍵欄位 */
+const WANT = [/機關名稱/,/預算金額/,/採購金額級距/,/招標方式/,/決標方式/,/截止投標/,/開標時間/,/總決標金額/,/決標金額/,/得標廠商/,/廠商名稱/,/決標日期/,/履約期限/];
+function flatten(obj, pre, out){
+  if (obj && typeof obj === "object"){
+    for (const k in obj){ flatten(obj[k], pre ? pre + ":" + k : k, out); }
+  } else if (obj !== null && obj !== "" && obj !== undefined){ out.push([pre, String(obj)]); }
+  return out;
+}
+async function showDetail(li){
+  const box = li.querySelector(".detail");
+  if (!box.hidden){ box.hidden = true; return; }
+  box.hidden = false;
+  const r = results.find(x => x.id === li.dataset.id);
+  if (!r || !r.detail){ box.textContent = "沒有詳細資料連結。"; return; }
+  box.textContent = "載入中…";
+  try{
+    const data = await getJSON(r.detail);
+    const recs = data.records || [data];
+    const rec = recs.find(x => String(x.date) === String(r.date) && x.filename === r.id.split("|")[3]) || recs[0];
+    const rows = flatten(rec && (rec.detail || rec), "", []);
+    const picked = [];
+    WANT.forEach(re => rows.forEach(([k,v]) => { if (re.test(k) && !picked.some(p=>p[0]===k)) picked.push([k,v]); }));
+    box.innerHTML = picked.length
+      ? '<table>' + picked.slice(0,16).map(([k,v]) => '<tr><td>'+esc(k.split(":").pop())+'</td><td>'+esc(v)+'</td></tr>').join("") + '</table>'
+      : "這筆公告沒有預算或決標欄位。";
+  }catch(e){ box.textContent = "無法載入詳細資料（" + e.message + "）。"; }
+}
+
+/* 事件 */
+$("go").onclick = search;
+$("filter").addEventListener("input", render);
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-g]"); if (g){ groupOn[g.dataset.g] = !groupOn[g.dataset.g]; buildGroupChips(); render(); return; }
+  const t = e.target.closest("[data-t]"); if (t){ typeOn[t.dataset.t] = !typeOn[t.dataset.t]; buildTypeChips(); render(); return; }
+  const d = e.target.closest("[data-d]"); if (d){ showDetail(d.closest(".item")); }
+});
+function fillSet(){ $("name-a").value=cfg.nameA; $("name-b").value=cfg.nameB; $("kw-a").value=cfg.kwA.join("\n"); $("kw-b").value=cfg.kwB.join("\n"); }
+const lines = s => s.split(/\n|,|、/).map(x=>x.trim()).filter(Boolean);
+$("save").onclick = () => { cfg.nameA=$("name-a").value.trim()||"A 組"; cfg.nameB=$("name-b").value.trim()||"B 組";
+  cfg.kwA=lines($("kw-a").value); cfg.kwB=lines($("kw-b").value); save(); buildGroupChips(); setStatus("已儲存，按「更新」重新搜尋。"); };
+$("reset").onclick = () => { cfg = Object.assign({}, DEF); save(); fillSet(); buildGroupChips(); setStatus("已恢復預設。"); };
+
+/* 加到手機桌面 */
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; });
+if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) $("install").hidden = true;
+$("install").onclick = async () => {
+  const h = $("install-hint"); h.hidden = false;
+  if (installEvt){ installEvt.prompt(); const r = await installEvt.userChoice.catch(()=>null); installEvt = null;
+    h.textContent = r && r.outcome === "accepted" ? "已加到桌面。" : "沒有加入，之後可以再按一次。"; return; }
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) h.textContent = "iPhone：用 Safari 打開，按「分享」→「加入主畫面」。";
+  else if (/Line\/|FBAN|FBAV|Instagram|Barcelona/.test(ua)) h.textContent = "請先點右上角選單，選「用瀏覽器開啟」，再按一次。";
+  else h.textContent = "請點瀏覽器右上角 ⋮，選「加到主畫面」或「安裝應用程式」。";
+};
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+load(); fillSet(); buildGroupChips();
+})();
+</script>
+</body>
+</html>
